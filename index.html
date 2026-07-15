@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Rationale: A hybrid diffusion framework resolving guidance conflicts for photorealistic, structure-preserving stylization via RSAG and Style-Aligned Sparse Attention.">
+  <meta name="keywords" content="Rationale, style transfer, material transfer, diffusion models, SDXL, structural guidance, RSAG, sparse attention, ACM MM 2026">
+  <meta property="og:title" content="Rationale: Structure-Preserving Stylization">
+  <meta property="og:description" content="A hybrid framework resolving multi-signal guidance conflicts in diffusion models for photorealistic style and material transfer.">
+  <meta property="og:image" content="images/abstract.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>Rationale — ACM MM 2026</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      color: #151827;
+      background: #fbfaf5;
+      line-height: 1.7;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    img { max-width: 100%; height: auto; display: block; }
+    a { color: #3657d9; text-decoration: none; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+    a:hover { color: #b8731a; }
+    h1, h2, h3, h4 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 650;
+      line-height: 1.15;
+    }
+    .container { max-width: 1060px; margin: 0 auto; padding: 0 clamp(24px, 5vw, 80px); }
+    .container-wide { max-width: 1220px; margin: 0 auto; padding: 0 clamp(24px, 5vw, 80px); }
+    .row { display: flex; gap: 2rem; flex-wrap: wrap; }
+    .col-half { flex: 1; min-width: 280px; }
+    .accent { color: #c38226; }
+
+    /* ── Nav ── */
+    .top-nav {
+      position: sticky; top: 0; z-index: 10;
+      border-bottom: 1px solid rgba(31,33,54,0.08);
+      background: rgba(251,250,245,0.92);
+      backdrop-filter: blur(18px);
+    }
+    .top-nav-inner {
+      max-width: 1180px; margin: 0 auto;
+      padding: 12px clamp(22px,5vw,70px);
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .top-nav-brand {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.25rem; font-weight: 700; color: #151827; letter-spacing: 0.01em;
+    }
+    .top-nav-links { display: flex; gap: 1.2rem; flex-wrap: wrap; justify-content: flex-end; }
+    .top-nav-links a {
+      font-size: 0.82rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #5c627d;
+    }
+    .top-nav-links a:hover { color: #c38226; }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      padding: 82px 24px 60px;
+      border-bottom: 1px solid #e8e4da;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 20%, rgba(195,130,38,0.16), transparent 34%),
+        radial-gradient(circle at 85% 12%, rgba(54,87,217,0.13), transparent 33%),
+        linear-gradient(180deg, #fbfaf5 0%, #f5f1e7 100%);
+    }
+    .hero::after {
+      content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.38;
+      background-image:
+        linear-gradient(rgba(21,24,39,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(21,24,39,0.045) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(180deg, #000, transparent 82%);
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 940px; margin: 0 auto; text-align: center; }
+    .venue-badge {
+      display: inline-block; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #fff; background: #c38226;
+      border-radius: 100px; padding: 4px 16px; margin-bottom: 1.4rem;
+    }
+    .hero-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 600; font-size: clamp(1.65rem, 3.6vw, 2.6rem);
+      line-height: 1.28; letter-spacing: -0.01em; color: #151827;
+      max-width: 920px; margin: 0 auto 1.7rem;
+    }
+    .hero-authors {
+      display: flex; justify-content: center; gap: 7px 18px; flex-wrap: wrap;
+      color: #20243a; font-size: 1.06rem; margin-bottom: 0.7rem;
+    }
+    .hero-authors .author { white-space: nowrap; }
+    .hero-authors sup { color: #c38226; font-weight: 600; font-size: 0.72em; padding-left: 1px; }
+    .hero-affils {
+      display: flex; justify-content: center; gap: 6px 22px; flex-wrap: wrap;
+      color: #646b87; font-size: 0.92rem; margin-bottom: 2rem;
+    }
+    .hero-links { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+    .hero-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 24px; border-radius: 100px; font-size: 0.92rem; font-weight: 600;
+      border: 1px solid #d9d7cf; color: #151827;
+      background: rgba(255,255,255,0.82); box-shadow: 0 7px 24px rgba(21,24,39,0.08);
+    }
+    .hero-btn:hover { color: #2947c7; border-color: rgba(54,87,217,0.35); background: #f4f6ff; }
+    .hero-btn-disabled {
+      color: #9a9eb2; border-color: #e2e0d8;
+      background: rgba(255,255,255,0.55); cursor: default; box-shadow: none;
+    }
+    .hero-btn-disabled:hover { color: #9a9eb2; border-color: #e2e0d8; background: rgba(255,255,255,0.55); }
+    .hero-btn-disabled .soon {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: #b8731a; background: rgba(195,130,38,0.14); border-radius: 100px; padding: 1px 7px; margin-left: 2px;
+    }
+
+    /* ── Teaser / Carousel ── */
+    .teaser-section { padding: 4rem 0 3rem; background: #fff; }
+    .carousel { position: relative; }
+    .carousel-viewport { position: relative; overflow: hidden; border-radius: 14px; }
+    .carousel-track { display: flex; transition: transform 0.45s cubic-bezier(.4,0,.2,1); }
+    .cslide { flex: 0 0 100%; min-width: 100%; }
+    .cslide-media {
+      background: #fff; border: 1px solid rgba(21,24,39,0.08); border-radius: 14px;
+      box-shadow: 0 12px 42px rgba(21,24,39,0.08); padding: 0.9rem; overflow: hidden;
+    }
+    .cslide-media img { width: 100%; height: auto; display: block; border-radius: 8px; }
+    .cslide-cap {
+      margin: 1rem auto 0; max-width: 820px; text-align: center;
+      font-size: 0.92rem; color: #5c637f; font-style: italic;
+    }
+    .cslide-cap b { color: #151827; font-style: normal; }
+    .carousel-arrow {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 1px solid rgba(21,24,39,0.12);
+      background: rgba(255,255,255,0.92); color: #151827;
+      cursor: pointer; z-index: 3; box-shadow: 0 6px 20px rgba(21,24,39,0.12);
+      transition: background .2s, color .2s;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    }
+    .carousel-arrow:hover { background: #151827; color: #fff; }
+    .carousel-arrow.prev { left: 14px; }
+    .carousel-arrow.next { right: 14px; }
+    .carousel-dots { display: flex; justify-content: center; gap: 9px; margin-top: 1.1rem; }
+    .carousel-dots button {
+      width: 9px; height: 9px; border-radius: 50%; border: 0; padding: 0;
+      cursor: pointer; background: rgba(21,24,39,0.18); transition: background .2s, transform .2s;
+    }
+    .carousel-dots button.active { background: #c38226; transform: scale(1.3); }
+
+    /* ── Shared figures ── */
+    .fig-img {
+      display: block; width: 100%; height: auto; border-radius: 14px;
+      background: #fff; border: 1px solid rgba(21,24,39,0.08);
+      box-shadow: 0 12px 42px rgba(21,24,39,0.08); margin: 0 auto;
+    }
+    .fig-img.med { max-width: 840px; }
+    .caption { font-size: 0.9rem; color: #616783; font-style: italic; margin-top: 1rem; }
+    .caption b { color: #151827; font-style: normal; }
+
+    /* ── Sections ── */
+    .section { padding: 5rem 0; }
+    .section-alt { background: #f3f5fb; }
+    .section-title { font-size: 2.55rem; text-align: left; margin-bottom: 0.55rem; color: #151827; }
+    .accent-dot {
+      display: inline-block; width: 10px; height: 10px; background: #c38226;
+      border-radius: 50%; margin-left: 5px; vertical-align: super;
+    }
+    .section-subtitle { color: #656c88; max-width: 780px; font-size: 1.02rem; margin-bottom: 2rem; }
+
+    /* ── Abstract ── */
+    .abstract-text p { font-size: 1.05rem; color: #323853; text-align: justify; margin-bottom: 1.15rem; }
+
+    /* ── Contribution cards ── */
+    .contrib-grid {
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1.1rem; margin-top: 2rem;
+    }
+    .contrib-card {
+      background: #fff; border: 1px solid rgba(21,24,39,0.08);
+      border-radius: 18px; padding: 1.4rem; box-shadow: 0 9px 34px rgba(21,24,39,0.055);
+    }
+    .contrib-num { font-size: 0.82rem; color: #c38226; font-weight: 700; letter-spacing: 0.13em; margin-bottom: 0.8rem; }
+    .contrib-card h4 {
+      display: block; font-family: 'Cormorant Garamond', Georgia, serif;
+      color: #151827; font-size: 1.28rem; line-height: 1.2; margin-bottom: 0.45rem;
+    }
+    .contrib-card p { color: #535a76; font-size: 0.94rem; line-height: 1.65; }
+
+    /* ── Method ── */
+    .method-caption {
+      max-width: 920px; margin: 1rem auto 2.3rem;
+      color: #5c637f; font-size: 0.92rem; font-style: italic;
+    }
+    .cmp-intro { color: #535a76; font-size: 0.98rem; max-width: 840px; margin-bottom: 1.4rem; }
+    .sub-h { font-size: 1.7rem; margin: 2.6rem 0 0.5rem; color: #151827; }
+    .callout {
+      border-left: 4px solid #c38226; background: #fffaf0;
+      padding: 1.2rem 1.35rem; border-radius: 0 14px 14px 0;
+      margin-top: 1.8rem; color: #393f59;
+    }
+
+    /* ── Equation card ── */
+    .equation-card {
+      text-align: center; color: #151827;
+      background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(242,245,255,0.9));
+      border: 1px solid rgba(54,87,217,0.16); border-radius: 20px;
+      padding: 2.2rem 1.4rem 1.8rem; margin: 1.6rem 0 2.3rem;
+      box-shadow: 0 16px 45px rgba(54,87,217,0.08); overflow-x: auto;
+    }
+    .equation-card .small {
+      display: block; font-size: 0.88rem; color: #656c88; margin-top: 1.1rem; font-style: italic;
+    }
+
+    /* ── Results ── */
+    .metric-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 2rem 0; }
+    .metric {
+      text-align: center; background: #151827; color: #fff;
+      border-radius: 18px; padding: 1.25rem 0.9rem;
+      box-shadow: 0 13px 36px rgba(21,24,39,0.18);
+    }
+    .metric strong {
+      display: block; font-family: 'Cormorant Garamond', Georgia, serif;
+      color: #f1c779; font-size: 2.1rem; line-height: 1; margin-bottom: 0.35rem;
+    }
+    .metric span { font-size: 0.78rem; color: #d9dce8; }
+    .result-figure {
+      background: #fff; border: 1px solid rgba(21,24,39,0.08);
+      border-radius: 18px; padding: 1.1rem; box-shadow: 0 10px 34px rgba(21,24,39,0.055);
+    }
+    .result-figure figcaption { color: #5d6480; font-size: 0.9rem; margin-top: 0.9rem; font-style: italic; }
+    .result-figure figcaption b { color: #151827; font-style: normal; }
+
+    /* ── Comparison table ── */
+    .cmp-table {
+      width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-top: 1.5rem;
+      background: #fff; border-radius: 14px; overflow: hidden;
+      box-shadow: 0 8px 28px rgba(21,24,39,0.05);
+    }
+    .cmp-table caption {
+      caption-side: bottom; color: #5c637f; font-size: 0.85rem;
+      font-style: italic; padding: 0.75rem 0.3rem 0; text-align: left;
+    }
+    .cmp-table th, .cmp-table td {
+      padding: 0.7rem 1rem; text-align: center;
+      border-bottom: 1px solid rgba(21,24,39,0.07);
+    }
+    .cmp-table th:first-child, .cmp-table td:first-child { text-align: left; }
+    .cmp-table thead th { background: #151827; color: #fff; font-weight: 600; }
+    .cmp-table tbody tr.hl { background: #eef3ff; }
+    .cmp-table tbody tr.hl td { color: #1f2a52; font-weight: 700; }
+
+    /* ── BibTeX ── */
+    .bibtex-section { background: #151827; color: #fff; padding: 4rem 0; }
+    .bibtex-section h2 { font-size: 2.4rem; margin-bottom: 1.4rem; color: #fff; }
+    .bibtex-block {
+      position: relative; background: #0f1220;
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 1.3rem; overflow-x: auto;
+    }
+    pre { color: #e7eaf6; font-size: 0.86rem; line-height: 1.55; font-family: 'Courier New', monospace; }
+    .copy-btn {
+      position: absolute; top: 12px; right: 12px;
+      border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08);
+      color: #fff; border-radius: 999px; padding: 6px 14px;
+      cursor: pointer; font-family: 'Outfit', sans-serif; font-size: 0.85rem;
+      transition: background .2s;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,0.18); }
+
+    /* ── Footer ── */
+    .site-footer {
+      background: #0f1220; color: #aeb4ce;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 1.4rem 0; font-size: 0.88rem; text-align: center;
+    }
+    .site-footer a { color: #8b92b0; }
+    .site-footer a:hover { color: #c38226; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .contrib-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 820px) {
+      .top-nav-inner { align-items: flex-start; flex-direction: column; }
+      .top-nav-links { gap: 0.8rem; }
+      .metric-strip { grid-template-columns: repeat(2, 1fr); }
+      .section { padding: 3.5rem 0; }
+      .hero { padding-top: 58px; }
+      .cmp-table { font-size: 0.82rem; }
+      .cmp-table th, .cmp-table td { padding: 0.55rem 0.5rem; }
+    }
+    @media (max-width: 600px) {
+      .contrib-grid { grid-template-columns: 1fr; }
+      .metric-strip { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ NAV ══════════════ -->
+<nav class="top-nav">
+  <div class="top-nav-inner">
+    <a href="#top" class="top-nav-brand"><span class="accent">Rationale</span></a>
+    <div class="top-nav-links">
+      <a href="#abstract">Abstract</a>
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#bibtex">BibTeX</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════ HERO ══════════════ -->
+<section class="hero" id="top">
+  <div class="hero-content">
+    <div class="venue-badge">ACM MM 2026</div>
+    <h1 class="hero-title">
+      Rationale: Rationally Conditional Image Synthesis<br>
+      with <span class="accent">Structural Consistency</span> and Style Control
+    </h1>
+    <div class="hero-authors">
+      <span class="author">Anonymous Authors</span>
+    </div>
+    <div class="hero-affils">
+      <span>Anonymous Institution &nbsp;&mdash;&nbsp; ACM International Conference on Multimedia 2026</span>
+    </div>
+    <div class="hero-links">
+      <a class="hero-btn hero-btn-disabled">
+        <i class="ai ai-arxiv"></i>&nbsp;arXiv <span class="soon">Soon</span>
+      </a>
+      <a class="hero-btn hero-btn-disabled">
+        <i class="fab fa-github"></i>&nbsp;Code <span class="soon">Soon</span>
+      </a>
+      <a class="hero-btn hero-btn-disabled">
+        <i class="fas fa-database"></i>&nbsp;SMSS Dataset <span class="soon">Soon</span>
+      </a>
+      <a class="hero-btn" href="#bibtex">
+        <i class="ai ai-google-scholar"></i>&nbsp;BibTeX
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ TEASER CAROUSEL ══════════════ -->
+<section class="teaser-section">
+  <div class="container-wide">
+    <div class="carousel" id="mainCarousel">
+      <div class="carousel-viewport">
+        <div class="carousel-track">
+
+          <figure class="cslide">
+            <div class="cslide-media">
+              <img src="images/abstract.png" alt="Rationale teaser: harmonizing physical and style controls">
+            </div>
+            <figcaption class="cslide-cap">
+              <b>Rationale</b> harmonizes physical and style controls for photorealistic stylization. A reference image differing only in target material guides precise, structure-preserving transfer into a shared latent space — without test-time optimization.
+            </figcaption>
+          </figure>
+
+          <figure class="cslide">
+            <div class="cslide-media">
+              <img src="images/1introduction.png" loading="lazy" alt="Motivation: naive adapter combinations create conflicting attention distributions">
+            </div>
+            <figcaption class="cslide-cap">
+              <b>Motivation.</b> Naive combinations of structural conditioning (ControlNet) and style adapters (IP-Adapter) produce competing attention distributions that corrupt feature updates. Rationale establishes a shared structural prior to resolve these conflicts coherently.
+            </figcaption>
+          </figure>
+
+          <figure class="cslide">
+            <div class="cslide-media">
+              <img src="images/style_transfer_comparison.png" loading="lazy" alt="Style transfer comparison against CSGO, StyleShot, StyTr2, StyleID, Attention Distillation">
+            </div>
+            <figcaption class="cslide-cap">
+              <b>Style Transfer Comparison.</b> Against CSGO, StyleShot, StyTr2, StyleID, and Attention Distillation. Rationale best preserves object geometry while faithfully reproducing fine-grained textures and color tones of the reference style.
+            </figcaption>
+          </figure>
+
+          <figure class="cslide">
+            <div class="cslide-media">
+              <img src="images/material_transfer_comparison.png" loading="lazy" alt="Material transfer comparison against ZeST">
+            </div>
+            <figcaption class="cslide-cap">
+              <b>Material Transfer Comparison.</b> Against ZeST (zero-shot example-based transfer). Our model generates textures with markedly higher photorealism, correctly conforming to the object's geometry and responding to its lighting environment.
+            </figcaption>
+          </figure>
+
+          <figure class="cslide">
+            <div class="cslide-media">
+              <img src="images/local.png" loading="lazy" alt="Local style transfer on masked region">
+            </div>
+            <figcaption class="cslide-cap">
+              <b>Local Style Transfer.</b> Rationale supports precise, masked-region stylization — applying the target style only to the specified area (e.g., a garment) while preserving the original appearance of the surrounding context.
+            </figcaption>
+          </figure>
+
+          <figure class="cslide">
+            <div class="cslide-media">
+              <img src="images/materials_transfer_display.png" loading="lazy" alt="Material transfer gallery across diverse materials">
+            </div>
+            <figcaption class="cslide-cap">
+              <b>Material Transfer Gallery.</b> Photorealistic material transfer across metal, stone, wood, fabric, and more — texture conforms to object geometry and lighting with high fidelity.
+            </figcaption>
+          </figure>
+
+        </div>
+      </div>
+      <button class="carousel-arrow prev" aria-label="Previous">&#8592;</button>
+      <button class="carousel-arrow next" aria-label="Next">&#8594;</button>
+      <div class="carousel-dots">
+        <button aria-label="Slide 1" class="active"></button>
+        <button aria-label="Slide 2"></button>
+        <button aria-label="Slide 3"></button>
+        <button aria-label="Slide 4"></button>
+        <button aria-label="Slide 5"></button>
+        <button aria-label="Slide 6"></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ ABSTRACT ══════════════ -->
+<section class="section section-alt" id="abstract">
+  <div class="container">
+    <h2 class="section-title">Abstract<span class="accent-dot"></span></h2>
+    <div class="abstract-text">
+      <p>
+        A fundamental challenge in controllable image generation is the conflict between concurrent guidance signals: structural conditioning and style conditioning compete for the same attention queries within the diffusion model's latent space, producing object distortions, incomplete stylization, or degraded photorealism. Existing methods address style injection or structural preservation in isolation, but lack a <b>shared contextual basis</b> that would allow both signals to be resolved coherently.
+      </p>
+      <p>
+        This paper introduces <b>Rationale</b>, a hybrid framework that resolves this conflict through three tightly coupled components. A lightweight, trainable <b>Resampler</b>, trained on our newly curated style-balanced <b>Subject-Materials-Style-Set (SMSS)</b> dataset, encodes a reference image into structure-aligned style tokens. <b>Relative Self-Attention Guidance (RSAG)</b> steers self-attention queries toward a pre-computed structural prior via a distributional shift formulation with a provable \(O(\sqrt{T})\) sublinear regret bound. <b>Style-Aligned Sparse Attention</b> decouples content and style at the query level using AdaIN normalization and deterministic Top-1 matching, preventing semantic bleed while preserving object geometry. Extensive evaluations demonstrate that Rationale achieves the best content preservation among compared methods (lowest LPIPS and ArtFID) while maintaining competitive style fidelity, and is consistently preferred by human evaluators.
+      </p>
+    </div>
+
+    <div class="contrib-grid">
+      <div class="contrib-card">
+        <div class="contrib-num">01</div>
+        <h4>Hybrid Guidance Framework</h4>
+        <p>Synergizes a lightweight trainable Resampler with two fully parameter-free, inference-time attention modules. Resolves guidance conflicts without test-time optimization and without sacrificing control granularity.</p>
+      </div>
+      <div class="contrib-card">
+        <div class="contrib-num">02</div>
+        <h4>RSAG</h4>
+        <p>Relative Self-Attention Guidance actively corrects structural distortions by steering generation queries toward a cached structural prior, formulated as a distributional shift with a provable \(O(\sqrt{T})\) regret bound.</p>
+      </div>
+      <div class="contrib-card">
+        <div class="contrib-num">03</div>
+        <h4>Sparse Attention</h4>
+        <p>Style-Aligned Sparse Attention decouples content and style at the query level via AdaIN normalization and deterministic Top-1 matching. Prevents semantic bleed across object regions while preserving object geometry.</p>
+      </div>
+      <div class="contrib-card">
+        <div class="contrib-num">04</div>
+        <h4>SMSS Dataset</h4>
+        <p>60K-image style-balanced dataset across 78 categories, addressing the photorealistic-image bias in prior training data. Enables generalized Resampler training. Dataset and code will be publicly released.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ METHOD ══════════════ -->
+<section class="section" id="method">
+  <div class="container">
+    <h2 class="section-title">Method<span class="accent-dot"></span></h2>
+    <p class="cmp-intro">
+      Rationale runs on a frozen SDXL backbone and introduces two inference-time modules. The <b>Resampler</b> (trainable) encodes the style reference into structure-aligned tokens. <b>RSAG</b> and <b>Style-Aligned Sparse Attention</b> (both parameter-free) jointly resolve attention conflicts at each U-Net block.
+    </p>
+
+    <img class="fig-img" src="images/2mechnism.png" alt="Rationale framework overview diagram">
+    <p class="method-caption">
+      <b>Rationale framework.</b>
+      <b>(A) Style-Aligned Sparse Attention</b> — the style image is encoded by the frozen CLIP encoder into patch-level keys/values and a global query. The spatial query \(Q_\text{ori}\) from the U-Net is modulated via AdaIN and fed into the trainable Resampler to produce structure-aligned style tokens, injected via Top-1 sparse attention.
+      <b>(B) RSAG</b> — the content image passes through the Physical Projection module to produce enhanced structural priors; self-attention queries are cached from a frozen U-Net forward pass, then used at each step to steer the main denoising via
+      \(Q_\text{guided} = Q_\text{ori} + \gamma_t(Q_\text{ref} - Q_\text{ori})\).
+    </p>
+
+    <h3 class="sub-h">Relative Self-Attention Guidance (RSAG)</h3>
+    <p class="cmp-intro">
+      Inspired by classifier-free guidance, RSAG frames structural preservation as a distributional shift in query space. The optimal shift direction is the score difference \(u^*(Q) = \nabla_Q \log P(Q_\text{ref}) - \nabla_Q \log P(Q_\text{ori})\), approximated by a first-order Taylor expansion as proportional to \((Q_\text{ref} - Q_\text{ori})\). We simplify the Hessian to a time-dependent scalar \(\gamma_t\), justified by approximately isotropic query distributions in the early high-noise stages.
+    </p>
+    <div class="equation-card">
+      \[
+        Q_\text{guided} = Q_\text{ori} + \gamma_t \,(Q_\text{ref} - Q_\text{ori}),
+        \quad
+        \gamma_t = \frac{1 - \cos(\pi t / T)}{2}
+      \]
+      <span class="small">The cosine schedule applies structural guidance most strongly in early (high-noise) denoising steps where global layout is established, and relaxes it in later steps for fine-detail refinement. A formal \(O(\sqrt{T})\) regret bound confirms this is a principled approximation of the intractable optimal shift.</span>
+    </div>
+
+    <h3 class="sub-h">Style-Aligned Sparse Attention</h3>
+    <p class="cmp-intro">
+      Unlike prior adapters that inject style indiscriminately via keys/values, we modulate <em>query statistics</em> to control <em>where</em> attention is paid. The spatial query is first aligned to global style statistics via AdaIN, then fed into the Resampler for structure-aware token extraction.
+    </p>
+    <div class="equation-card">
+      \[
+        Q_\text{Ada} = \sigma(Q_\text{sty})\cdot\frac{Q - \mu(Q)}{\sigma(Q)} + \mu(Q_\text{sty})
+      \]
+      \[
+        O_\text{style} = \mathrm{Softmax}\!\left(\mathrm{Top\text{-}1}\!\left(\frac{Q'_\text{sty}(K'_\text{sty})^\top}{\sqrt{d}}\right)\right)V'_\text{sty},
+        \quad
+        O' = O + \lambda_s\, O_\text{style}
+      \]
+      <span class="small">Deterministic Top-1 sparsity acts as a "Winner-Take-All" regularizer: each content region attends to exactly one style patch, preventing the muddy averaging effect of dense attention and eliminating inter-region semantic bleed.</span>
+    </div>
+
+    <img class="fig-img med" src="images/physical.png" alt="Physical Projection module" style="margin-top: 1.5rem;">
+    <p class="method-caption">
+      <b>Physical Projection module.</b> Multi-scale edge detection (Sobel + Canny), structure tensor analysis, and pyramid-smoothed depth gradients are fused to produce an enhanced structural prior. Surface normals estimated from smoothed depth, combined with a parameterized light direction, enable Lambertian shading simulation — providing realistic lighting control without explicit 3D modeling.
+    </p>
+
+    <div class="callout">
+      <b>No test-time optimization.</b> RSAG and Style-Aligned Sparse Attention are fully parameter-free. The only overhead is a one-time query-caching pass (~1.2 s on a single RTX 4090), which is amortized to near-zero when generating multiple styled variants from the same structural reference.
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ RESULTS ══════════════ -->
+<section class="section section-alt" id="results">
+  <div class="container">
+    <h2 class="section-title">Results<span class="accent-dot"></span></h2>
+    <p class="section-subtitle">
+      Evaluated against CSGO, StyleShot, StyTr2, StyleID, and Attention Distillation for style transfer; ZeST for material transfer. User study: 187 participants, 5-point Likert scale, 5,000+ ratings, <em>p</em>&thinsp;&lt;&thinsp;0.05 (Wilcoxon signed-rank test).
+    </p>
+
+    <div class="metric-strip">
+      <div class="metric">
+        <strong>0.483</strong>
+        <span>LPIPS — best content preservation ↓</span>
+      </div>
+      <div class="metric">
+        <strong>25.03</strong>
+        <span>ArtFID — best overall quality ↓</span>
+      </div>
+      <div class="metric">
+        <strong>4.5 / 5</strong>
+        <span>User preference — stylization quality ↑</span>
+      </div>
+      <div class="metric">
+        <strong>187</strong>
+        <span>User study participants</span>
+      </div>
+    </div>
+
+    <!-- Style transfer comparison -->
+    <figure class="result-figure" style="text-align:center; margin-bottom: 2rem;">
+      <img class="fig-img" src="images/style_transfer_comparison.png" alt="Style transfer qualitative comparison">
+      <figcaption>
+        <b>Style transfer comparison.</b> Rationale better preserves object geometry and structural edges while achieving faithful, fine-grained stylization across diverse WikiArt reference styles.
+      </figcaption>
+    </figure>
+
+    <!-- Style transfer table -->
+    <table class="cmp-table">
+      <caption>Quantitative style transfer comparison on MS-COCO (content) × WikiArt (style). ↓ lower is better; ↑ higher is better.</caption>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>ArtFID ↓</th>
+          <th>FID ↓</th>
+          <th>LPIPS ↓</th>
+          <th>LPIPS<sub>gray</sub> ↓</th>
+          <th>User Pref. ↑</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>CSGO</td><td>36.930</td><td>21.207</td><td>0.663</td><td>0.539</td><td>4.0</td></tr>
+        <tr><td>StyleShot (contour)</td><td>36.426</td><td>19.580</td><td>0.770</td><td>0.683</td><td>3.2</td></tr>
+        <tr><td>StyleShot (lineart)</td><td>35.488</td><td>20.639</td><td>0.640</td><td>0.529</td><td>3.9</td></tr>
+        <tr><td>StyTr2</td><td>30.708</td><td>18.889</td><td>0.544</td><td>0.449</td><td>4.1</td></tr>
+        <tr><td>StyleID</td><td>28.778</td><td>18.122</td><td>0.505</td><td>0.439</td><td>4.3</td></tr>
+        <tr><td>Attn. Distillation</td><td>28.977</td><td>17.504</td><td>0.566</td><td>0.470</td><td>3.8</td></tr>
+        <tr class="hl"><td><b>Rationale (Ours)</b></td><td><b>25.029</b></td><td><b>16.877</b></td><td><b>0.483</b></td><td><b>0.433</b></td><td><b>4.5</b></td></tr>
+      </tbody>
+    </table>
+
+    <!-- Material transfer comparison -->
+    <figure class="result-figure" style="text-align:center; margin-top: 2.5rem; margin-bottom: 2rem;">
+      <img class="fig-img" src="images/material_transfer_comparison.png" alt="Material transfer comparison against ZeST">
+      <figcaption>
+        <b>Material transfer comparison (vs. ZeST).</b> Our method generates textures with substantially higher photorealism, correctly conforming to the object's surface geometry and responding accurately to its lighting environment.
+      </figcaption>
+    </figure>
+
+    <!-- Ablation -->
+    <figure class="result-figure" style="text-align:center; margin-bottom: 2rem;">
+      <img class="fig-img" src="images/ablation.png" alt="Ablation study">
+      <figcaption>
+        <b>Ablation study.</b> Removing RSAG causes geometric distortion; removing Sparse Attention causes semantic bleed across regions; replacing all modules with linear interpolation collapses the output. The full model produces the most coherent structure and style.
+      </figcaption>
+    </figure>
+
+    <!-- Controllability row -->
+    <div class="row" style="margin-top: 2rem;">
+      <div class="col-half">
+        <img class="fig-img" src="images/lighting_direction.png" alt="Lighting direction control">
+        <p class="caption"><b>Lighting control.</b> Varying the virtual light source direction (via the Physical Projection module's shading parameterization) produces geometrically consistent changes in highlights and shadows.</p>
+      </div>
+      <div class="col-half">
+        <img class="fig-img" src="images/structure.png" alt="Structural intensity control">
+        <p class="caption"><b>Structural intensity control.</b> The scale parameter γ provides fine-grained control over structural enhancement prominence, validated by corresponding attention map visualizations.</p>
+      </div>
+    </div>
+
+    <!-- Style display gallery -->
+    <figure class="result-figure" style="text-align:center; margin-top: 2.5rem;">
+      <img class="fig-img" src="images/style_display.png" loading="lazy" alt="Gallery of style transfer results across WikiArt styles">
+      <figcaption>
+        <b>Style transfer gallery.</b> WikiArt reference styles (top row) and corresponding Rationale outputs, demonstrating robust generalization across diverse artistic domains including impressionism, cubism, watercolor, and sketch styles.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ══════════════ BIBTEX ══════════════ -->
+<section class="bibtex-section" id="bibtex">
+  <div class="container">
+    <h2>BibTeX</h2>
+    <div class="bibtex-block">
+      <button class="copy-btn" onclick="copyBib()" aria-label="Copy BibTeX">Copy</button>
+      <pre><code id="bibtex-code">@inproceedings{anonymous2026rationale,
+  title     = {Rationale: Rationally Conditional Image Synthesis
+               with Structural Consistency and Style Control},
+  author    = {Anonymous Authors},
+  booktitle = {Proceedings of the ACM International Conference on Multimedia},
+  year      = {2026}
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    &copy; 2026 Rationale Authors &nbsp;&mdash;&nbsp;
+    Page design inspired by <a href="https://huangrh99.github.io/SpectraReward/">SpectraReward</a>.
+  </div>
+</footer>
+
+<!-- ══════════════ JS ══════════════ -->
+<script>
+// BibTeX copy
+function copyBib() {
+  const code = document.getElementById('bibtex-code').textContent;
+  const btn = document.querySelector('.copy-btn');
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  }).catch(() => {
+    btn.textContent = 'Copy failed';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+// Carousel
+(function () {
+  const track = document.querySelector('.carousel-track');
+  const slides = document.querySelectorAll('.cslide');
+  const dots = document.querySelectorAll('.carousel-dots button');
+  let cur = 0, timer;
+
+  function go(n) {
+    cur = (n + slides.length) % slides.length;
+    track.style.transform = 'translateX(-' + (cur * 100) + '%)';
+    dots.forEach((d, i) => d.classList.toggle('active', i === cur));
+  }
+
+  function startAuto() { timer = setInterval(() => go(cur + 1), 5000); }
+  function stopAuto()  { clearInterval(timer); }
+
+  document.querySelector('.carousel-arrow.prev').addEventListener('click', () => { stopAuto(); go(cur - 1); startAuto(); });
+  document.querySelector('.carousel-arrow.next').addEventListener('click', () => { stopAuto(); go(cur + 1); startAuto(); });
+  dots.forEach((d, i) => d.addEventListener('click', () => { stopAuto(); go(i); startAuto(); }));
+
+  // Swipe support
+  let sx = 0;
+  track.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
+  track.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) > 40) { stopAuto(); go(cur + (dx < 0 ? 1 : -1)); startAuto(); }
+  }, { passive: true });
+
+  startAuto();
+})();
+</script>
+
+</body>
+</html>
