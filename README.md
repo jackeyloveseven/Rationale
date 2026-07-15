@@ -1,4 +1,4 @@
-# Rationale: Resolving Multi-Signal Guidance Conflicts for Structure-Preserving Stylization
+# Rationale: Rationally Conditional Image Synthesis with Structural Consistency and Distribution Shift
 
 <div align="center">
 
@@ -93,7 +93,7 @@ Dataset and training code will be released upon publication.
 ```bibtex
 @inproceedings{anonymous2026rationale,
   title     = {Rationale: Rationally Conditional Image Synthesis
-               with Structural Consistency and Style Control},
+               with Structural Consistency and Distribution Shift},
   author    = {Anonymous Authors},
   booktitle = {Proceedings of the ACM International Conference on Multimedia},
   year      = {2026}
