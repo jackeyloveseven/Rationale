@@ -91,10 +91,10 @@ Dataset and training code will be released upon publication.
 ## BibTeX
 
 ```bibtex
-@inproceedings{anonymous2026rationale,
+@inproceedings{chengyanli2026rationale,
   title     = {Rationale: Rationally Conditional Image Synthesis
                with Structural Consistency and Distribution Shift},
-  author    = {Anonymous Authors},
+  author    = {chengyanli},
   booktitle = {Proceedings of the ACM International Conference on Multimedia},
   year      = {2026}
 }
