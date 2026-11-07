@@ -3,7 +3,7 @@
 <div align="center">
 
 [![Project Page](https://img.shields.io/badge/Project-Page-blue?style=flat-square&logo=googlechrome)](https://jackeyloveseven.github.io/Rationale/)
-[![Paper](https://img.shields.io/badge/Paper-Coming%20Soon-lightgrey?style=flat-square&logo=arxiv)](https://jackeyloveseven.github.io/Rationale/)
+[![Paper](https://img.shields.io/badge/Paper-ACM%20DL-b31b1b?style=flat-square&logo=acm)](https://doi.org/10.1145/3767308.3835277)
 [![Code](https://img.shields.io/badge/Code-Coming%20Soon-lightgrey?style=flat-square&logo=github)](https://jackeyloveseven.github.io/Rationale/)
 [![Dataset](https://img.shields.io/badge/SMSS%20Dataset-Coming%20Soon-lightgrey?style=flat-square&logo=huggingface)](https://jackeyloveseven.github.io/Rationale/)
 
@@ -96,6 +96,7 @@ Dataset and training code will be released upon publication.
                with Structural Consistency and Distribution Shift},
   author    = {chengyanli},
   booktitle = {Proceedings of the ACM International Conference on Multimedia},
-  year      = {2026}
+  year      = {2026},
+  doi       = {10.1145/3767308.3835277}
 }
 ```
